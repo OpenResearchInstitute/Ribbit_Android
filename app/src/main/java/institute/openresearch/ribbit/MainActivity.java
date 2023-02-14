@@ -55,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
 
 		@Override
 		public void onPeriodicNotification(AudioTrack audioTrack) {
-			boolean empty = drawEncoder(outputBuffer, outputBuffer.length);
 			produceEncoder();
+			boolean empty = drawEncoder(outputBuffer, outputBuffer.length);
 			audioTrack.write(outputBuffer, 0, outputBuffer.length, AudioTrack.WRITE_BLOCKING);
 			if (empty)
 				audioTrack.stop();

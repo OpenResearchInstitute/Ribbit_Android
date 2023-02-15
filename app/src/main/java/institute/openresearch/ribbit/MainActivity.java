@@ -51,8 +51,6 @@ public class MainActivity extends AppCompatActivity {
 
 	private native boolean feedDecoder(float[] audioBuffer, int sampleCount);
 
-	private native boolean processDecoder();
-
 	private native boolean createDecoder();
 
 	private native void destroyDecoder();
@@ -95,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 		@Override
 		public void onPeriodicNotification(AudioRecord audioRecord) {
 			audioRecord.read(recordBuffer, 0, recordBuffer.length, AudioRecord.READ_BLOCKING);
-			if (feedDecoder(recordBuffer, recordBuffer.length) && processDecoder()) {
+			if (feedDecoder(recordBuffer, recordBuffer.length)) {
 				byte[] payload = new byte[256];
 				if (fetchDecoder(payload))
 					binding.sampleText.setText(new String(payload).trim());

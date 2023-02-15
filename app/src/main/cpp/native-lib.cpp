@@ -99,22 +99,13 @@ Java_institute_openresearch_ribbit_MainActivity_feedDecoder(
 	jobject,
 	jfloatArray JNI_audioBuffer,
 	jint sampleCount) {
-	jboolean process = false;
+	jboolean fetch = false;
 	if (decoder) {
 		jfloat *audioBuffer = env->GetFloatArrayElements(JNI_audioBuffer, nullptr);
 		if (audioBuffer)
-			process = decoder->feed(reinterpret_cast<float *>(audioBuffer), sampleCount);
+			fetch = decoder->feed(reinterpret_cast<float *>(audioBuffer), sampleCount);
 		env->ReleaseFloatArrayElements(JNI_audioBuffer, audioBuffer, JNI_ABORT);
 	}
-	return process;
-}
-
-extern "C" JNIEXPORT jboolean JNICALL
-Java_institute_openresearch_ribbit_MainActivity_processDecoder(
-	JNIEnv *,
-	jobject) {
-	if (!decoder)
-		return false;
-	return decoder->process();
+	return fetch;
 }
 

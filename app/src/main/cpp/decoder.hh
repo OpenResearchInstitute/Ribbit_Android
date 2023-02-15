@@ -146,6 +146,34 @@ class Decoder {
 		return hadamard(meta);
 	}
 
+	bool process() {
+		if (staged_check) {
+			staged_check = false;
+			if (preamble() == 1) {
+				osc.omega(-staged_cfo_rad);
+				symbol_position = staged_position;
+				symbol_number = -1;
+				return false;
+			}
+		}
+		bool fetch_payload = false;
+		if (symbol_number < payload_symbols) {
+			for (int i = 0; i < extended_length; ++i)
+				temp[i] = buf[symbol_position + i] * osc();
+			fwd(freq, temp);
+			if (symbol_number >= 0) {
+				for (int i = 0; i < subcarrier_count; ++i)
+					cons[i] = demod_or_erase(freq[first_subcarrier + i], prev[i]);
+				demap();
+			}
+			if (++symbol_number == payload_symbols)
+				fetch_payload = true;
+			for (int i = 0; i < subcarrier_count; ++i)
+				prev[i] = freq[first_subcarrier + i];
+		}
+		return fetch_payload;
+	}
+
 public:
 	Decoder() : correlator(corSeq()) {
 		block_dc.samples(filter_length);
@@ -178,37 +206,9 @@ public:
 				staged_check = true;
 				stored_check = false;
 			}
-			return true;
+			return process();
 		}
 		return false;
-	}
-
-	bool process() {
-		if (staged_check) {
-			staged_check = false;
-			if (preamble() == 1) {
-				osc.omega(-staged_cfo_rad);
-				symbol_position = staged_position;
-				symbol_number = -1;
-				return false;
-			}
-		}
-		bool fetch_payload = false;
-		if (symbol_number < payload_symbols) {
-			for (int i = 0; i < extended_length; ++i)
-				temp[i] = buf[symbol_position + i] * osc();
-			fwd(freq, temp);
-			if (symbol_number >= 0) {
-				for (int i = 0; i < subcarrier_count; ++i)
-					cons[i] = demod_or_erase(freq[first_subcarrier + i], prev[i]);
-				demap();
-			}
-			if (++symbol_number == payload_symbols)
-				fetch_payload = true;
-			for (int i = 0; i < subcarrier_count; ++i)
-				prev[i] = freq[first_subcarrier + i];
-		}
-		return fetch_payload;
 	}
 };
 

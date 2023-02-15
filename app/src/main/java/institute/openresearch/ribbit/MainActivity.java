@@ -14,7 +14,6 @@ import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
-import android.widget.TextView;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -180,15 +179,13 @@ public class MainActivity extends AppCompatActivity {
 		}
 		if (!permissions.isEmpty())
 			ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), permissionID);
-		if (false) {
-			String message = "Hello World!\n";
-			byte[] payload = Arrays.copyOf(message.getBytes(StandardCharsets.UTF_8), 256);
-			initEncoder(payload);
-			handler.postDelayed(this::transmit, 3000);
-		}
+		if (false)
+			handler.postDelayed(() -> transmit("Hello World!\n"), 3000);
 	}
 
-	private void transmit() {
+	private void transmit(String message) {
+		byte[] payload = Arrays.copyOf(message.getBytes(StandardCharsets.UTF_8), 256);
+		initEncoder(payload);
 		stopListening();
 		for (int i = 0; i < outputCount; ++i) {
 			readEncoder(outputBuffer, outputBuffer.length);

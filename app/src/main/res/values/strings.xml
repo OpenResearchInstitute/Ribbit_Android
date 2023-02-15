@@ -1,3 +1,12 @@
 <resources>
 	<string name="app_name">Ribbit</string>
+	<string name="payload_decoding_error">payload decoding error</string>
+	<string name="audio_init_failed">audio init failed</string>
+	<string name="audio_setup_failed">audio setup failed</string>
+	<string name="audio_permission_denied">audio permission denied</string>
+	<string name="listening">listening</string>
+	<string name="audio_recording_error">audio recording error</string>
+	<string name="failed_creating_encoder">failed creating encoder</string>
+	<string name="failed_creating_decoder">failed creating decoder</string>
+	<string name="transmitting">transmitting</string>
 </resources>

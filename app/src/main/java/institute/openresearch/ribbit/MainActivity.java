@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
 				if (fetchDecoder(payload))
 					binding.status.setText(new String(payload).trim());
 				else
-					binding.status.setText("payload decoding error");
+					binding.status.setText(R.string.payload_decoding_error);
 			}
 		}
 	};
@@ -118,12 +118,12 @@ public class MainActivity extends AppCompatActivity {
 				audioRecord.setPositionNotificationPeriod(recordBuffer.length);
 				startListening();
 			} else {
-				binding.status.setText("audio init failed");
+				binding.status.setText(R.string.audio_init_failed);
 			}
 		} catch (IllegalArgumentException e) {
-			binding.status.setText("audio setup failed");
+			binding.status.setText(R.string.audio_setup_failed);
 		} catch (SecurityException e) {
-			binding.status.setText("audio permission denied");
+			binding.status.setText(R.string.audio_permission_denied);
 		}
 	}
 
@@ -132,9 +132,9 @@ public class MainActivity extends AppCompatActivity {
 			audioRecord.startRecording();
 			if (audioRecord.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
 				audioRecord.read(recordBuffer, 0, recordBuffer.length, AudioRecord.READ_BLOCKING);
-				binding.status.setText("listening");
+				binding.status.setText(R.string.listening);
 			} else {
-				binding.status.setText("audio recording error");
+				binding.status.setText(R.string.audio_recording_error);
 			}
 		}
 	}
@@ -162,18 +162,15 @@ public class MainActivity extends AppCompatActivity {
 		setContentView(binding.getRoot());
 		handler = new Handler(getMainLooper());
 
-		if (!createEncoder()) {
-			binding.status.setText("failed creating encoder");
-		} else if (!createDecoder()) {
-			binding.status.setText("failed creating decoder");
-		} else {
-			binding.status.setText("ready to go");
-		}
+		if (!createEncoder())
+			binding.status.setText(R.string.failed_creating_encoder);
+		else if (!createDecoder())
+			binding.status.setText(R.string.failed_creating_decoder);
 		initAudioTrack();
 		List<String> permissions = new ArrayList<>();
 		if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
 			permissions.add(Manifest.permission.RECORD_AUDIO);
-			binding.status.setText("audio permission denied");
+			binding.status.setText(R.string.audio_permission_denied);
 		} else {
 			initAudioRecord();
 		}
@@ -191,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
 			readEncoder(outputBuffer, outputBuffer.length);
 			audioTrack.write(outputBuffer, 0, outputBuffer.length, AudioTrack.WRITE_BLOCKING);
 		}
-		binding.status.setText("transmitting");
+		binding.status.setText(R.string.transmitting);
 		audioTrack.play();
 	}
 

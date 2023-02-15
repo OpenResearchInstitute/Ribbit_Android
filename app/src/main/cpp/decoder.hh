@@ -46,8 +46,8 @@ class Decoder {
 	static const int subcarrier_count = 64;
 	static const int payload_symbols = 32;
 	static const int first_subcarrier = 16;
-	static const int buffer_length = 4 * extended_length;
-	static const int search_position = extended_length;
+	static const int buffer_length = 5 * extended_length;
+	static const int search_position = 2 * extended_length;
 	DSP::FastFourierTransform<symbol_length, cmplx, -1> fwd;
 	SchmidlCox<float, cmplx, search_position, symbol_length, guard_length> correlator;
 	DSP::BlockDC<float, float> block_dc;
@@ -59,7 +59,7 @@ class Decoder {
 	cmplx temp[extended_length], freq[symbol_length], prev[subcarrier_count], cons[subcarrier_count];
 	code_type code[code_len], meta[meta_len];
 	int symbol_number = payload_symbols;
-	int symbol_position = search_position + extended_length;
+	int symbol_position = search_position;
 	int stored_position = 0;
 	int staged_position = 0;
 	int accumulated = 0;
@@ -164,7 +164,7 @@ public:
 		for (int i = 0; i < sample_count; ++i) {
 			if (correlator(buffer(analytic(audio_buffer[i])))) {
 				stored_cfo_rad = correlator.cfo_rad;
-				stored_position = correlator.symbol_pos + accumulated;
+				stored_position = correlator.symbol_pos + accumulated - extended_length;
 				stored_check = true;
 			}
 			if (++accumulated == extended_length)
@@ -190,6 +190,7 @@ public:
 				osc.omega(-staged_cfo_rad);
 				symbol_position = staged_position;
 				symbol_number = -1;
+				return false;
 			}
 		}
 		bool fetch_payload = false;

@@ -21,7 +21,7 @@ class SchmidlCox {
 	DSP::SMA4<cmplx, value, symbol_len, false> cor;
 	DSP::SMA4<value, value, symbol_len, false> pwr;
 	DSP::SMA4<value, value, match_len, false> match;
-	DSP::Delay<value, match_del> delay;
+	DSP::Delay<value, match_del> align;
 	DSP::SchmittTrigger<value> threshold;
 	DSP::FallingEdgeTrigger falling;
 	cmplx tmp0[symbol_len], tmp1[symbol_len];
@@ -35,10 +35,10 @@ class SchmidlCox {
 	}
 
 	static cmplx demod_or_erase(cmplx curr, cmplx prev) {
-		if (norm(prev) <= 0)
+		if (!(norm(prev) > 0))
 			return 0;
 		cmplx cons = curr / prev;
-		if (norm(cons) > 4)
+		if (!(norm(cons) <= 4))
 			return 0;
 		return cons;
 	}
@@ -60,7 +60,7 @@ public:
 		value min_R = 0.00001 * symbol_len;
 		R = std::max(R, min_R);
 		value timing = match(norm(P) / (R * R));
-		value phase = delay(arg(P));
+		value phase = align(arg(P));
 
 		bool collect = threshold(timing);
 		bool process = falling(collect);
@@ -91,7 +91,7 @@ public:
 		index_max = 0;
 		timing_max = 0;
 		for (int i = 0; i < symbol_len; ++i)
-			tmp1[i] = samples[i + test_pos + symbol_len] * osc();
+			tmp1[i] = samples[i + test_pos] * osc();
 		fwd(tmp0, tmp1);
 		for (int i = 0; i < symbol_len; ++i)
 			tmp1[i] = demod_or_erase(tmp0[i], tmp0[bin(i - 1)]);

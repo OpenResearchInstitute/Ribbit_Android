@@ -201,4 +201,24 @@ public class MainActivity extends AppCompatActivity {
 		binding.sampleText.setText("transmitting");
 		audioTrack.play();
 	}
+
+	@Override
+	protected void onResume() {
+		startListening();
+		super.onResume();
+	}
+
+	@Override
+	protected void onPause() {
+		stopListening();
+		super.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		audioTrack.stop();
+		destroyEncoder();
+		destroyDecoder();
+		super.onDestroy();
+	}
 }

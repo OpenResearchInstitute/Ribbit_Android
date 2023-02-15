@@ -16,9 +16,12 @@ import android.os.Bundle;
 import android.os.Handler;
 
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import institute.openresearch.ribbit.databinding.ActivityMainBinding;
 
@@ -154,6 +157,10 @@ public class MainActivity extends AppCompatActivity {
 				initAudioRecord();
 	}
 
+	private String currentTime() {
+		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -176,8 +183,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 		if (!permissions.isEmpty())
 			ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), permissionID);
-		if (false)
-			handler.postDelayed(() -> transmit("Hello World!\n"), 3000);
+		handler.postDelayed(() -> transmit("Hello World!\n" + currentTime() + "\n"), 3000);
 	}
 
 	private void transmit(String message) {

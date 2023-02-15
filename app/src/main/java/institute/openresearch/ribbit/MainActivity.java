@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
 	private AudioTrack audioTrack;
 	private Handler handler;
 	private float[] outputBuffer;
-	private final int outputCount = 14;
+	private int outputCount;
 
 	private native void initEncoder(byte[] payload);
 
@@ -61,10 +61,15 @@ public class MainActivity extends AppCompatActivity {
 	};
 
 	private void initAudioTrack() {
+		int sampleRate = 8000;
 		int sampleSize = 4;
 		int channelCount = 1;
-		int bufferSize = outputCount * outputBuffer.length * sampleSize * channelCount;
-		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 8000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_FLOAT, bufferSize, AudioTrack.MODE_STREAM);
+		int writesPerSecond = 50;
+		double bufferSeconds = 0.5;
+		outputBuffer = new float[(sampleRate * channelCount) / writesPerSecond];
+		outputCount = (int)(sampleRate * channelCount * bufferSeconds) / outputBuffer.length;
+		int bufferSize = outputCount * outputBuffer.length * sampleSize;
+		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_FLOAT, bufferSize, AudioTrack.MODE_STREAM);
 		audioTrack.setPlaybackPositionUpdateListener(outputListener);
 		audioTrack.setPositionNotificationPeriod(outputBuffer.length);
 	}
@@ -88,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
 			String message = "Hello World!\n";
 			byte[] payload = Arrays.copyOf(message.getBytes(StandardCharsets.UTF_8), 256);
 			initEncoder(payload);
-			outputBuffer = new float[256];
 			initAudioTrack();
 			handler.postDelayed(this::transmit, 1000);
 		}

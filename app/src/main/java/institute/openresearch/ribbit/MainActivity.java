@@ -25,13 +25,11 @@ public class MainActivity extends AppCompatActivity {
 	private AudioTrack audioTrack;
 	private Handler handler;
 	private float[] outputBuffer;
-	private final int outputCount = 16;
+	private final int outputCount = 14;
 
-	private native void configureEncoder(byte[] payload);
+	private native void initEncoder(byte[] payload);
 
-	private native boolean drawEncoder(float[] audioBuffer, int sampleCount);
-
-	private native boolean produceEncoder();
+	private native boolean readEncoder(float[] audioBuffer, int sampleCount);
 
 	private native boolean createEncoder();
 
@@ -55,10 +53,9 @@ public class MainActivity extends AppCompatActivity {
 
 		@Override
 		public void onPeriodicNotification(AudioTrack audioTrack) {
-			produceEncoder();
-			boolean empty = drawEncoder(outputBuffer, outputBuffer.length);
+			boolean done = readEncoder(outputBuffer, outputBuffer.length);
 			audioTrack.write(outputBuffer, 0, outputBuffer.length, AudioTrack.WRITE_BLOCKING);
-			if (empty)
+			if (done)
 				audioTrack.stop();
 		}
 	};
@@ -90,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
 			tv.setText("ready to go");
 			String message = "Hello World!\n";
 			byte[] payload = Arrays.copyOf(message.getBytes(StandardCharsets.UTF_8), 256);
-			configureEncoder(payload);
+			initEncoder(payload);
 			outputBuffer = new float[256];
 			initAudioTrack();
 			handler.postDelayed(this::transmit, 1000);
@@ -99,8 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private void transmit() {
 		for (int i = 0; i < outputCount; ++i) {
-			produceEncoder();
-			drawEncoder(outputBuffer, outputBuffer.length);
+			readEncoder(outputBuffer, outputBuffer.length);
 			audioTrack.write(outputBuffer, 0, outputBuffer.length, AudioTrack.WRITE_BLOCKING);
 		}
 		audioTrack.play();

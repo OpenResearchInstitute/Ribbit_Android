@@ -32,39 +32,30 @@ Java_institute_openresearch_ribbit_MainActivity_destroyEncoder(
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_institute_openresearch_ribbit_MainActivity_produceEncoder(
-	JNIEnv *,
-	jobject) {
-	if (!encoder)
-		return false;
-	return encoder->produce();
-}
-
-extern "C" JNIEXPORT jboolean JNICALL
-Java_institute_openresearch_ribbit_MainActivity_drawEncoder(
+Java_institute_openresearch_ribbit_MainActivity_readEncoder(
 	JNIEnv *env,
 	jobject,
 	jfloatArray JNI_audioBuffer,
 	jint sampleCount) {
-	jboolean empty = true;
+	jboolean done = true;
 	if (encoder) {
 		jfloat *audioBuffer = env->GetFloatArrayElements(JNI_audioBuffer, nullptr);
 		if (audioBuffer)
-			empty = encoder->draw(audioBuffer, sampleCount);
+			done = encoder->read(audioBuffer, sampleCount);
 		env->ReleaseFloatArrayElements(JNI_audioBuffer, audioBuffer, 0);
 	}
-	return empty;
+	return done;
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_institute_openresearch_ribbit_MainActivity_configureEncoder(
+Java_institute_openresearch_ribbit_MainActivity_initEncoder(
 	JNIEnv *env,
 	jobject,
 	jbyteArray JNI_payload) {
 	if (encoder) {
 		jbyte *payload = env->GetByteArrayElements(JNI_payload, nullptr);
 		if (payload)
-			encoder->configure(reinterpret_cast<uint8_t *>(payload));
+			encoder->init(reinterpret_cast<uint8_t *>(payload));
 		env->ReleaseByteArrayElements(JNI_payload, payload, JNI_ABORT);
 	}
 }

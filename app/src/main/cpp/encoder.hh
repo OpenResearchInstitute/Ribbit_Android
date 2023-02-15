@@ -110,9 +110,6 @@ class Encoder {
 			buffer.push_front(temp[i].real());
 	}
 
-public:
-	Encoder() : noise_seq(0b100101010001) {}
-
 	bool produce() {
 		if (buffer.size() > buffer.max_size() - 2 * extended_length)
 			return false;
@@ -147,8 +144,12 @@ public:
 		return true;
 	}
 
-	bool draw(float *audio_buffer, int sample_count) {
+public:
+	Encoder() : noise_seq(0b100101010001) {}
+
+	bool read(float *audio_buffer, int sample_count) {
 		for (int i = 0; i < sample_count; ++i) {
+			produce();
 			if (buffer.size()) {
 				audio_buffer[i] = buffer.back();
 				buffer.pop_back();
@@ -159,7 +160,7 @@ public:
 		return !buffer.size();
 	}
 
-	void configure(const uint8_t *payload) {
+	void init(const uint8_t *payload) {
 		symbol_number = 0;
 		count_down = 5;
 		noise_count = noise_symbols;

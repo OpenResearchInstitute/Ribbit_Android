@@ -1,3 +1,9 @@
+/*
+Ribbit
+
+Copyright 2023 Ahmet Inan <inan@aicodix.de>
+*/
+
 package institute.openresearch.ribbit;
 
 import androidx.annotation.NonNull;

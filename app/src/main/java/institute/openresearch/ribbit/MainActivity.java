@@ -1,6 +1,7 @@
 package institute.openresearch.ribbit;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -14,14 +15,18 @@ import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import institute.openresearch.ribbit.databinding.ActivityMainBinding;
 
@@ -40,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
 	private float[] recordBuffer;
 	private float[] outputBuffer;
 	private int outputCount;
+	private String message;
 
 	private native void initEncoder(byte[] payload);
 
@@ -157,10 +163,6 @@ public class MainActivity extends AppCompatActivity {
 				initAudioRecord();
 	}
 
-	private String currentTime() {
-		return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date());
-	}
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -168,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
 		binding = ActivityMainBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 		handler = new Handler(getMainLooper());
+		message = "Hello World!";
 
 		if (!createEncoder())
 			binding.status.setText(R.string.failed_creating_encoder);
@@ -183,10 +186,9 @@ public class MainActivity extends AppCompatActivity {
 		}
 		if (!permissions.isEmpty())
 			ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), permissionID);
-		handler.postDelayed(() -> transmit("Hello World!\n" + currentTime() + "\n"), 3000);
 	}
 
-	private void transmit(String message) {
+	private void transmit() {
 		byte[] payload = Arrays.copyOf(message.getBytes(StandardCharsets.UTF_8), 256);
 		initEncoder(payload);
 		stopListening();
@@ -196,6 +198,64 @@ public class MainActivity extends AppCompatActivity {
 		}
 		binding.status.setText(R.string.transmitting);
 		audioTrack.play();
+	}
+
+	private void composeMessage() {
+		View view = getLayoutInflater().inflate(R.layout.composer, null);
+		EditText edit = view.findViewById(R.id.message);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(R.string.compose_message);
+		builder.setView(view);
+		builder.setNeutralButton(R.string.back, (dialogInterface, i) -> message = edit.getText().toString());
+		builder.setPositiveButton(R.string.transmit, (dialogInterface, i) -> {
+			message = edit.getText().toString();
+			transmit();
+		});
+		builder.setOnCancelListener(dialogInterface -> message = edit.getText().toString());
+		AlertDialog dialog = builder.show();
+		TextView left = view.findViewById(R.id.capacity);
+		edit.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+			}
+
+			@Override
+			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				int bytes = charSequence.toString().getBytes().length;
+				if (bytes <= 256) {
+					int num = 256 - bytes;
+					left.setText(getResources().getQuantityString(R.plurals.bytes_left, num, num));
+					dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+				} else {
+					int num = bytes - 256;
+					left.setText(getResources().getQuantityString(R.plurals.over_capacity, num, num));
+					dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+				}
+			}
+
+			@Override
+			public void afterTextChanged(Editable editable) {
+
+			}
+		});
+		edit.setText(message);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.menu_main, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		int id = item.getItemId();
+		if (id == R.id.action_compose) {
+			composeMessage();
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	@Override

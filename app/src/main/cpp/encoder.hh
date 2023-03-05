@@ -75,6 +75,9 @@ class Encoder {
 
 	void preamble(int data) {
 		hadamard(meta, data);
+		CODE::MLS seq(0b10000011);
+		for (int i = 0; i < meta_len; ++i)
+			meta[i] *= nrz(seq());
 		for (int i = 0; i < subcarrier_count; ++i)
 			freq[first_subcarrier + i] *= mod_map(meta + mod_bits * i);
 		symbol();

@@ -143,6 +143,9 @@ class Decoder {
 			cons[i] = demod_or_erase(freq[first_subcarrier + i], cons[i]);
 		for (int i = 0; i < subcarrier_count; ++i)
 			mod_soft(meta + mod_bits * i, cons[i], 8);
+		CODE::MLS seq(0b10000011);
+		for (int i = 0; i < meta_len; ++i)
+			meta[i] *= nrz(seq());
 		return hadamard(meta);
 	}
 

@@ -45,7 +45,7 @@ class Decoder {
 	static const int filter_length = 33;
 	static const int subcarrier_count = 64;
 	static const int payload_symbols = 32;
-	static const int first_subcarrier = 16;
+	static const int first_subcarrier = -subcarrier_count / 2;
 	static const int buffer_length = 5 * extended_length;
 	static const int search_position = 2 * extended_length;
 	DSP::FastFourierTransform<symbol_length, cmplx, -1> fwd;
@@ -68,6 +68,11 @@ class Decoder {
 	bool stored_check = false;
 	bool staged_check = false;
 	const cmplx *buf;
+
+	static int bin(int carrier)
+	{
+		return (carrier + first_subcarrier + symbol_length) % symbol_length;
+	}
 
 	static int nrz(bool bit) {
 		return 1 - 2 * bit;
@@ -98,8 +103,8 @@ class Decoder {
 		CODE::MLS seq(0b1100111);
 		for (int i = 0; i < symbol_length; ++i)
 			freq[i] = 0;
-		for (int i = first_subcarrier + 1; i < first_subcarrier + subcarrier_count; ++i)
-			freq[i] = nrz(seq());
+		for (int i = 1; i < subcarrier_count; ++i)
+			freq[bin(i)] = nrz(seq());
 		return freq;
 	}
 
@@ -135,12 +140,12 @@ class Decoder {
 			nco();
 		fwd(freq, temp);
 		for (int i = 0; i < subcarrier_count; ++i)
-			cons[i] = freq[first_subcarrier + i];
+			cons[i] = freq[bin(i)];
 		for (int i = 0; i < symbol_length; ++i)
 			temp[i] = buf[staged_position + extended_length + i] * nco();
 		fwd(freq, temp);
 		for (int i = 0; i < subcarrier_count; ++i)
-			cons[i] = demod_or_erase(freq[first_subcarrier + i], cons[i]);
+			cons[i] = demod_or_erase(freq[bin(i)], cons[i]);
 		for (int i = 0; i < subcarrier_count; ++i)
 			mod_soft(meta + mod_bits * i, cons[i], 8);
 		CODE::MLS seq(0b10000011);
@@ -166,13 +171,13 @@ class Decoder {
 			fwd(freq, temp);
 			if (symbol_number >= 0) {
 				for (int i = 0; i < subcarrier_count; ++i)
-					cons[i] = demod_or_erase(freq[first_subcarrier + i], prev[i]);
+					cons[i] = demod_or_erase(freq[bin(i)], prev[i]);
 				demap();
 			}
 			if (++symbol_number == payload_symbols)
 				fetch_payload = true;
 			for (int i = 0; i < subcarrier_count; ++i)
-				prev[i] = freq[first_subcarrier + i];
+				prev[i] = freq[bin(i)];
 		}
 		return fetch_payload;
 	}

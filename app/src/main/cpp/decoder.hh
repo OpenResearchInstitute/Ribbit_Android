@@ -22,6 +22,7 @@ namespace DSP {
 #include "bip_buffer.hh"
 #include "xorshift.hh"
 #include "complex.hh"
+#include "permute.hh"
 #include "hilbert.hh"
 #include "blockdc.hh"
 #include "bitman.hh"
@@ -55,6 +56,7 @@ class Decoder {
 	DSP::BipBuffer<cmplx, buffer_length> buffer;
 	DSP::Phasor<cmplx> osc;
 	CODE::SimplexDecoder<6> simplex;
+	CODE::ReverseFisherYatesShuffle<code_len> shuffle;
 	PolarDecoder<code_type> polar;
 	cmplx temp[extended_length], freq[symbol_length], prev[subcarrier_count], cons[subcarrier_count];
 	code_type code[code_len], meta[meta_len];
@@ -181,6 +183,7 @@ public:
 	}
 
 	bool fetch(uint8_t *payload) {
+		shuffle(code);
 		bool result = polar(payload, code);
 		CODE::Xorshift32 scrambler;
 		for (int i = 0; i < mesg_bytes; ++i)

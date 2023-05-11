@@ -10,6 +10,7 @@ Copyright 2023 Ahmet Inan <inan@aicodix.de>
 #include <iostream>
 #include <algorithm>
 #include "simplex_encoder.hh"
+#include "permute.hh"
 #include "xorshift.hh"
 #include "complex.hh"
 #include "bitman.hh"
@@ -40,6 +41,7 @@ class Encoder {
 	DSP::Deque<float, 3 * extended_length> buffer;
 	CODE::MLS noise_seq;
 	CODE::SimplexEncoder<6> simplex;
+	CODE::FisherYatesShuffle<code_len> shuffle;
 	PolarEncoder<code_type> polar;
 	cmplx temp[symbol_length], freq[symbol_length];
 	float guard[guard_length];
@@ -172,6 +174,7 @@ public:
 		for (int i = 0; i < mesg_bytes; ++i)
 			mesg[i] = payload[i] ^ scrambler();
 		polar(code, mesg);
+		shuffle(code);
 	}
 };
 

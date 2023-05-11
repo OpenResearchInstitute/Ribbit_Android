@@ -17,7 +17,7 @@ namespace DSP {
 	using std::sin;
 }
 
-#include "hadamard_decoder.hh"
+#include "simplex_decoder.hh"
 #include "schmidl_cox.hh"
 #include "bip_buffer.hh"
 #include "xorshift.hh"
@@ -38,7 +38,7 @@ class Decoder {
 	static const int mesg_bytes = 256;
 	static const int mod_bits = 2;
 	static const int code_len = 1 << code_order;
-	static const int meta_len = 128;
+	static const int meta_len = 63;
 	static const int symbol_length = 256;
 	static const int guard_length = symbol_length / 8;
 	static const int extended_length = symbol_length + guard_length;
@@ -54,7 +54,7 @@ class Decoder {
 	DSP::Hilbert<cmplx, filter_length> hilbert;
 	DSP::BipBuffer<cmplx, buffer_length> buffer;
 	DSP::Phasor<cmplx> osc;
-	CODE::HadamardDecoder<8> hadamard;
+	CODE::SimplexDecoder<6> simplex;
 	PolarDecoder<code_type> polar;
 	cmplx temp[extended_length], freq[symbol_length], prev[subcarrier_count], cons[subcarrier_count];
 	code_type code[code_len], meta[meta_len];
@@ -135,23 +135,16 @@ class Decoder {
 		DSP::Phasor<cmplx> nco;
 		nco.omega(-staged_cfo_rad);
 		for (int i = 0; i < symbol_length; ++i)
-			temp[i] = buf[staged_position + i] * nco();
-		for (int i = 0; i < guard_length; ++i)
-			nco();
-		fwd(freq, temp);
-		for (int i = 0; i < subcarrier_count; ++i)
-			cons[i] = freq[bin(i)];
-		for (int i = 0; i < symbol_length; ++i)
 			temp[i] = buf[staged_position + extended_length + i] * nco();
 		fwd(freq, temp);
-		for (int i = 0; i < subcarrier_count; ++i)
-			cons[i] = demod_or_erase(freq[bin(i)], cons[i]);
-		for (int i = 0; i < subcarrier_count; ++i)
-			mod_soft(meta + mod_bits * i, cons[i], 8);
-		CODE::MLS seq(0b10000011);
+		for (int i = 0; i < meta_len; ++i)
+			cons[i] = demod_or_erase(freq[bin(i+1)], freq[bin(i)]);
+		for (int i = 0; i < meta_len; ++i)
+			meta[i] = DSP::clamp<float>(16 * cons[i].real(), -127, 127);
+		CODE::MLS seq(0b1000011);
 		for (int i = 0; i < meta_len; ++i)
 			meta[i] *= nrz(seq());
-		return hadamard(meta);
+		return simplex(meta);
 	}
 
 	bool process() {

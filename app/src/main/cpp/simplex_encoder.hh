@@ -1,5 +1,5 @@
 /*
-Encoder for augmented Hadamard codes
+Encoder for Simplex codes
 
 Copyright 2020 Ahmet Inan <inan@aicodix.de>
 */
@@ -9,10 +9,10 @@ Copyright 2020 Ahmet Inan <inan@aicodix.de>
 namespace CODE {
 
 template <int K>
-class HadamardEncoder
+class SimplexEncoder
 {
 	static const int W = 1 << K;
-	static const int N = 1 << (K - 1);
+	static const int N = (1 << K) - 1;
 	int8_t mod[W];
 
 	static bool parity(unsigned x)
@@ -25,7 +25,7 @@ class HadamardEncoder
 		return x & 1;
 	}
 public:
-	HadamardEncoder()
+	SimplexEncoder()
 	{
 		for (int i = 0; i < W; ++i)
 			mod[i] = 1 - 2 * parity(i);
@@ -33,7 +33,7 @@ public:
 	void operator()(int8_t *code, int msg)
 	{
 		for (int i = 0; i < N; ++i)
-			code[i] = mod[msg&(i|N)];
+			code[i] = mod[msg&(i+1)];
 	}
 };
 

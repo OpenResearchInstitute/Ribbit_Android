@@ -9,7 +9,7 @@ Copyright 2023 Ahmet Inan <inan@aicodix.de>
 #include <cmath>
 #include <iostream>
 #include <algorithm>
-#include "hadamard_encoder.hh"
+#include "simplex_encoder.hh"
 #include "xorshift.hh"
 #include "complex.hh"
 #include "bitman.hh"
@@ -28,7 +28,7 @@ class Encoder {
 	static const int mesg_bytes = 256;
 	static const int mod_bits = 2;
 	static const int code_len = 1 << code_order;
-	static const int meta_len = 128;
+	static const int meta_len = 63;
 	static const int symbol_length = 256;
 	static const int subcarrier_count = 64;
 	static const int payload_symbols = 32;
@@ -39,7 +39,7 @@ class Encoder {
 	DSP::FastFourierTransform<symbol_length, cmplx, 1> bwd;
 	DSP::Deque<float, 3 * extended_length> buffer;
 	CODE::MLS noise_seq;
-	CODE::HadamardEncoder<8> hadamard;
+	CODE::SimplexEncoder<6> simplex;
 	PolarEncoder<code_type> polar;
 	cmplx temp[symbol_length], freq[symbol_length];
 	float guard[guard_length];
@@ -74,12 +74,11 @@ class Encoder {
 	}
 
 	void preamble(int data) {
-		hadamard(meta, data);
-		CODE::MLS seq(0b10000011);
+		simplex(meta, data);
+		CODE::MLS seq(0b1000011);
+		freq[first_subcarrier] = std::sqrt(float(symbol_length) / subcarrier_count);
 		for (int i = 0; i < meta_len; ++i)
-			meta[i] *= nrz(seq());
-		for (int i = 0; i < subcarrier_count; ++i)
-			freq[first_subcarrier + i] *= mod_map(meta + mod_bits * i);
+			freq[first_subcarrier + 1 + i] = freq[first_subcarrier + i] * cmplx(meta[i] * nrz(seq()));
 		symbol();
 	}
 

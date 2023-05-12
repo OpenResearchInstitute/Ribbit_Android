@@ -72,7 +72,7 @@ class PolarDecoder {
 public:
 	PolarDecoder() : crc(0x8F6E37A0) {}
 
-	bool operator()(uint8_t *message, const code_type *code) {
+	int operator()(uint8_t *message, const code_type *code) {
 		metric_type metric[mesg_type::SIZE];
 		decode(metric, mesg, code, frozen_4096_2080, code_order);
 		systematic(frozen_4096_2080);
@@ -91,12 +91,17 @@ public:
 			}
 		}
 		if (best < 0)
-			return false;
-		for (int i = 0; i < data_bits; ++i) {
+			return -1;
+		int flips = 0;
+		for (int i = 0, j = 0; i < data_bits; ++i, ++j) {
+			while ((frozen_4096_2080[j / 32] >> (j % 32)) & 1)
+				++j;
+			bool received = code[j] < 0;
 			bool decoded = mesg[i].v[best] < 0;
+			flips += received != decoded;
 			CODE::set_le_bit(message, i, decoded);
 		}
-		return true;
+		return flips;
 	}
 };
 

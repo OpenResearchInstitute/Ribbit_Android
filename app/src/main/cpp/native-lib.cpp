@@ -77,19 +77,19 @@ Java_institute_openresearch_ribbit_MainActivity_createDecoder(
 	return decoder != nullptr;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
+extern "C" JNIEXPORT jint JNICALL
 Java_institute_openresearch_ribbit_MainActivity_fetchDecoder(
 	JNIEnv *env,
 	jobject,
 	jbyteArray JNI_payload) {
-	jboolean error = true;
+	jint result = -1;
 	if (decoder) {
 		jbyte *payload = env->GetByteArrayElements(JNI_payload, nullptr);
 		if (payload)
-			error = decoder->fetch(reinterpret_cast<uint8_t *>(payload));
+			result = decoder->fetch(reinterpret_cast<uint8_t *>(payload));
 		env->ReleaseByteArrayElements(JNI_payload, payload, 0);
 	}
-	return error;
+	return result;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

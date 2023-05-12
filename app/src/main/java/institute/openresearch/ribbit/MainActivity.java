@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
 	private native void destroyEncoder();
 
-	private native boolean fetchDecoder(byte[] payload);
+	private native int fetchDecoder(byte[] payload);
 
 	private native boolean feedDecoder(float[] audioBuffer, int sampleCount);
 
@@ -109,10 +109,12 @@ public class MainActivity extends AppCompatActivity {
 			audioRecord.read(recordBuffer, 0, recordBuffer.length, AudioRecord.READ_BLOCKING);
 			if (feedDecoder(recordBuffer, recordBuffer.length)) {
 				byte[] payload = new byte[256];
-				if (fetchDecoder(payload))
-					binding.status.setText(new String(payload).trim());
-				else
+				int result = fetchDecoder(payload);
+				if (result < 0)
 					binding.status.setText(R.string.payload_decoding_error);
+				else
+					binding.status.setText(getString(R.string.message_status, new String(payload).trim(),
+						getResources().getQuantityString(R.plurals.bits_flipped, result, result)));
 			}
 		}
 	};

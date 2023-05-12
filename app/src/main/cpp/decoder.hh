@@ -171,9 +171,9 @@ public:
 		block_dc.samples(filter_length);
 	}
 
-	bool fetch(uint8_t *payload) {
+	int fetch(uint8_t *payload) {
 		shuffle(code);
-		bool result = polar(payload, code);
+		int result = polar(payload, code);
 		CODE::Xorshift32 scrambler;
 		for (int i = 0; i < mesg_bytes; ++i)
 			payload[i] ^= scrambler();

@@ -35,9 +35,10 @@ namespace DSP {
 class Decoder {
 	typedef DSP::Complex<float> cmplx;
 	typedef int8_t code_type;
+	typedef PhaseShiftKeying<2, cmplx, code_type> bpsk;
+	typedef PhaseShiftKeying<4, cmplx, code_type> qpsk;
 	static const int code_order = 12;
 	static const int mesg_bytes = 256;
-	static const int mod_bits = 2;
 	static const int code_len = 1 << code_order;
 	static const int meta_len = 63;
 	static const int symbol_length = 256;
@@ -80,18 +81,6 @@ class Decoder {
 		return 1 - 2 * bit;
 	}
 
-	static cmplx mod_map(code_type *b) {
-		return PhaseShiftKeying<4, cmplx, code_type>::map(b);
-	}
-
-	static void mod_hard(code_type *b, cmplx c) {
-		PhaseShiftKeying<4, cmplx, code_type>::hard(b, c);
-	}
-
-	static void mod_soft(code_type *b, cmplx c, float precision) {
-		PhaseShiftKeying<4, cmplx, code_type>::soft(b, c, precision);
-	}
-
 	static cmplx demod_or_erase(cmplx curr, cmplx prev) {
 		if (norm(prev) <= 0)
 			return 0;
@@ -117,9 +106,9 @@ class Decoder {
 	float precision() {
 		float sp = 0, np = 0;
 		for (int i = 0; i < subcarrier_count; ++i) {
-			code_type tmp[mod_bits];
-			mod_hard(tmp, cons[i]);
-			cmplx hard = mod_map(tmp);
+			code_type tmp[2];
+			qpsk::hard(tmp, cons[i]);
+			cmplx hard = qpsk::map(tmp);
 			cmplx error = cons[i] - hard;
 			sp += norm(hard);
 			np += norm(error);
@@ -130,7 +119,7 @@ class Decoder {
 	void demap() {
 		float pre = precision();
 		for (int i = 0; i < subcarrier_count; ++i)
-			mod_soft(code + mod_bits * (symbol_number * subcarrier_count + i), cons[i], pre);
+			qpsk::soft(code + 2 * (symbol_number * subcarrier_count + i), cons[i], pre);
 	}
 
 	int preamble() {
@@ -142,7 +131,7 @@ class Decoder {
 		for (int i = 0; i < meta_len; ++i)
 			cons[i] = demod_or_erase(freq[bin(i+1)], freq[bin(i)]);
 		for (int i = 0; i < meta_len; ++i)
-			meta[i] = DSP::clamp<float>(16 * cons[i].real(), -127, 127);
+			bpsk::soft(meta + i, cons[i], 8);
 		CODE::MLS seq(0b1000011);
 		for (int i = 0; i < meta_len; ++i)
 			meta[i] *= nrz(seq());

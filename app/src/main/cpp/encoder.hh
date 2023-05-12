@@ -25,9 +25,9 @@ Copyright 2023 Ahmet Inan <inan@aicodix.de>
 class Encoder {
 	typedef DSP::Complex<float> cmplx;
 	typedef int8_t code_type;
+	typedef PhaseShiftKeying<4, cmplx, code_type> qpsk;
 	static const int code_order = 12;
 	static const int mesg_bytes = 256;
-	static const int mod_bits = 2;
 	static const int code_len = 1 << code_order;
 	static const int meta_len = 63;
 	static const int symbol_length = 256;
@@ -53,10 +53,6 @@ class Encoder {
 
 	static int nrz(bool bit) {
 		return 1 - 2 * bit;
-	}
-
-	static cmplx mod_map(code_type *b) {
-		return PhaseShiftKeying<4, cmplx, code_type>::map(b);
 	}
 
 	void noise_symbol() {
@@ -86,7 +82,7 @@ class Encoder {
 
 	void payload_symbol() {
 		for (int i = 0; i < subcarrier_count; ++i)
-			freq[first_subcarrier + i] *= mod_map(code + mod_bits * (subcarrier_count * symbol_number + i));
+			freq[first_subcarrier + i] *= qpsk::map(code + 2 * (subcarrier_count * symbol_number + i));
 		symbol();
 	}
 
